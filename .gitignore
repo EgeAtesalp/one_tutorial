@@ -1,3 +1,5 @@
 /target
 secret.json
 .env
+stdout.log
+prices.csv
