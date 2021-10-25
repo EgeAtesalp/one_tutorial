@@ -2,6 +2,7 @@
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use clap::{Arg, App};
+use csv::Writer;
 
 #[macro_use]
 extern crate dotenv_codegen;
@@ -51,7 +52,12 @@ async fn main()-> Result<(), Box<dyn std::error::Error>> {
         let currencies = matches.value_of("currency_list").expect("No currencies were being passed");  
         
     
+    let mut wtr = Writer::from_path("prices.csv")?;
+    wtr.write_record(&["Name", "Symbol", "Price","24HourChange", "7DayChange"])?;
+    
     let mut params = HashMap::new();
+
+
     params.insert("symbol", currencies.to_string());
     dotenv().ok();
 
@@ -69,8 +75,11 @@ async fn main()-> Result<(), Box<dyn std::error::Error>> {
 
     let resp = resp.json::<Response>().await?;
 
-    println!("{:#?}", resp);
+    for (symbol, currency) in resp.data.into_iter() {
+           wtr.write_record(&[currency.name, symbol.to_owned(), currency.quote.0.get("USD").unwrap().price.to_string(), currency.quote.0.get("USD").unwrap().percent_change_24h.to_string(),  currency.quote.0.get("USD").unwrap().percent_change_7d.to_string()])?;
+    }
 
+    wtr.flush()?;
     
 
     Ok(())
