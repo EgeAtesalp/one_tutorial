@@ -1,79 +1,23 @@
 
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
+
 use clap::{Arg, App};
 use csv::Writer;
 use log::{error, info, debug};
 use log4rs;
+mod cmc;
+mod eod;
+mod error;
+
+use cmc::CMCResponse;
+use eod::EODResponse;
+use error::GeneralError;
 
 #[macro_use]
 extern crate dotenv_codegen;
 
 use dotenv::dotenv;
 
-#[derive(Debug)]
-enum GeneralError{
-    NoApiKey,
-    CSVError(csv::Error),
-    IOError(std::io::Error),
-    ReqwestError(reqwest::Error),
-}
-
-impl std::error::Error for GeneralError {}
-
-impl std::fmt::Display for GeneralError{   
-    fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self{
-            GeneralError::NoApiKey =>write!(f, "No API key is set via the .env variable."),
-            GeneralError::CSVError(err) =>write!(f, "Error while writing the CSV file {}", err),
-            GeneralError::IOError(err) =>write!(f, "Error while flushing the file {}", err),
-            GeneralError::ReqwestError(err) =>write!(f, "Error while fetching data {}", err),
-        }
-    }
-}
-
-impl From<reqwest::Error> for GeneralError{
-    fn from(err : reqwest::Error) -> GeneralError{
-        GeneralError::ReqwestError(err)
-    }
-}
-impl From<std::io::Error> for GeneralError{
-    fn from(err : std::io::Error) -> GeneralError{
-        GeneralError::IOError(err)
-    }
-}
-impl From<csv::Error> for GeneralError{
-    fn from(err : csv::Error) -> GeneralError{
-        GeneralError::CSVError(err)
-    }
-}
-
-
-#[derive(Serialize,Deserialize,Debug)]
-struct Currency{
-    name: String,
-    symbol: String,
-    quote: Quotes,
-}
-
-#[derive(Serialize,Deserialize,Debug)]
-struct Quote{
-    price: f64,
-    percent_change_24h: f64,
-    percent_change_7d: f64,
-}
-
-#[derive(Serialize,Deserialize,Debug)]
-struct CMCResponse{ data : HashMap<String,Currency>}
-
-#[derive(Serialize,Deserialize,Debug)]
-struct Quotes(HashMap<String, Quote>);
-
-#[derive(Serialize, Deserialize, Debug)]
-struct EODResponse {
-    code: String,
-    close: f64,
-}
 
 
 
